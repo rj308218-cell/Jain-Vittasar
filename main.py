@@ -2,11 +2,11 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 from supabase import create_client, Client
+import pandas as pd
 
-# Load environment variables (Streamlit secrets or .env)
+# Load environment variables (Local .env or Streamlit secrets)
 load_dotenv()
 
-# Fetch Supabase keys safely (supports Streamlit secrets if hosted online)
 SUPABASE_URL = os.getenv("SUPABASE_URL") or st.secrets.get("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY")
 
@@ -16,16 +16,48 @@ def init_supabase():
 
 supabase = init_supabase()
 
-st.title("Jain Vittasar - Financial Intelligence & Billing (Cloud Edition)")
+st.set_page_config(page_title="Jain Vittasar - Cloud Edition", layout="wide")
 
-# Example Streamlit connection verification widget
+st.title("🏢 Jain Vittasar - Financial Intelligence & Billing (Cloud Edition)")
+
+# Connection Verification Widget
 try:
     response = supabase.table("inventory").select("id").limit(1).execute()
     st.success("Connected to Supabase cloud database successfully!")
 except Exception as e:
     st.error(f"Supabase connection error: {e}")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-import tkinter as tk
+
+# Navigation Sidebar for Cloud App
+st.sidebar.title("Navigation")
+choice = st.sidebar.radio("Go to", ["Home / Company Profile", "Sales & Billing", "Inventory Control"])
+
+if choice == "Home / Company Profile":
+    st.subheader("Company Profile Management")
+    # Add your Streamlit form inputs here instead of Tkinter entries
+    company_name = st.text_input("Company Name")
+    gstin = st.text_input("GSTIN")
+    if st.button("Save Company Profile"):
+        try:
+            supabase.table("company_profile").insert({"name": company_name, "gstin": gstin}).execute()
+            st.success("Company profile saved to cloud successfully!")
+        except Exception as err:
+            st.error(f"Error saving profile: {err}")
+
+elif choice == "Sales & Billing":
+    st.subheader("Billing Module")
+    st.info("Build your web-based invoice generation workflow here using Streamlit inputs.")
+
+elif choice == "Inventory Control":
+    st.subheader("Inventory Management")
+    try:
+        inv_data = supabase.table("inventory").select("*").execute()
+        if inv_data.data:
+            df_inv = pd.DataFrame(inv_data.data)
+            st.dataframe(df_inv)
+        else:
+            st.info("No inventory items found.")
+    except Exception as e:
+        st.error(f"Failed to load inventory: {e}")import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import sqlite3
 import time
